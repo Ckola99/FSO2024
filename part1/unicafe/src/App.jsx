@@ -6,6 +6,7 @@ const Button = ({ text, onClick }) => {
 };
 
 const StatisticLine = ({ text, value }) => {
+
 	return (
 		<p>
 			{text} {value}
@@ -15,6 +16,7 @@ const StatisticLine = ({ text, value }) => {
 
 
 const Statistics = ({ good, bad, neutral, total }) => {
+
 	return (
 		<>
 			<h1>statistics</h1>
