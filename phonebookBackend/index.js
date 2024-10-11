@@ -1,8 +1,12 @@
 const express = require('express')
 const app = express()
+const cors = require('cors')
 var morgan = require('morgan')
 
-app.use(express.json())
+app.use(express.json());
+
+// Use CORS middleware
+app.use(cors());
 
 morgan.token('body', function (req) {
 	// Stringify the body; if it's missing, log that it's missing
@@ -108,6 +112,7 @@ app.post('/api/persons', (request, response) => {
 	response.json(person);
 })
 
-const PORT = 3001;
-app.listen(PORT)
-console.log(`Server running on port ${PORT}`)
+const PORT = process.env.port || 3001;
+app.listen(PORT, () => {
+	console.log(`Server running on port ${PORT}`)
+})

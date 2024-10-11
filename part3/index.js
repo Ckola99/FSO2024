@@ -1,7 +1,11 @@
 const express = require('express')
 const app = express()
+const cors = require('cors')
 
 app.use(express.json())
+
+// Use CORS middleware
+app.use(cors());
 
 let notes = [
 	{
