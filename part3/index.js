@@ -79,6 +79,27 @@ app.post('/api/notes', (request, response) => {
   response.json(note)
 })
 
+app.patch('/api/notes/:id', (request, response) => {
+	const id = request.params.id;
+	const body = request.body;
+
+	const note = notes.find(note => note.id === id);
+
+	if(!note){
+		return response.status(404).json({ error: 'note not found '})
+	};
+
+	const updatedNote = {
+		...note,
+		content: body.content || note.content,
+		important: body.important || note.important
+	}
+
+	notes = notes.map(note => note.id === id ? updatedNote : note)
+
+  	response.json(updatedNote)
+})
+
 const unknownEndpoint = (request, response) => {
 	response.status(404).send({ error: 'unknown endpoint' })
 }
