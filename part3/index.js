@@ -79,7 +79,7 @@ app.post('/api/notes', (request, response) => {
   response.json(note)
 })
 
-app.patch('/api/notes/:id', (request, response) => {
+app.put('/api/notes/:id', (request, response) => {
 	const id = request.params.id;
 	const body = request.body;
 
