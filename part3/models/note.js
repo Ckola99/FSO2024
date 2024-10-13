@@ -18,8 +18,16 @@ mongoose.connect(url)
   })
 
 const noteSchema = new mongoose.Schema({
-  content: String,
-  important: Boolean,
+  content: {
+    type: String,
+    minLength: 5,
+    required: true,
+    unique: true, // Enforce uniqueness
+  },
+  important: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 // Set the toJSON method to transform Mongoose document objects:
@@ -27,11 +35,11 @@ const noteSchema = new mongoose.Schema({
 // - Remove unnecessary fields like _id and __v from the returned JSON.
 // This helps simplify the data structure we send to clients and ensures the id is always a string.
 noteSchema.set('toJSON', {
-	transform: (document, returnedObject) => {
-		returnedObject.id = returnedObject._id.toString()
-		delete returnedObject._id
-		delete returnedObject.__v
-	}
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
 })
 
 

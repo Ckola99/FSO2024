@@ -7,112 +7,133 @@ const Note = require('./models/note')
 
 app.use(express.json())
 // Use CORS middleware
-app.use(cors());
+app.use(cors())
+var morgan = require('morgan')
 app.use(express.static('dist'))
 
+morgan.token('body', function (req) {
+  // Stringify the body; if it's missing, log that it's missing
+  return JSON.stringify(req.body) || 'missing body'
+})
 
+app.use(morgan(function (tokens, req, res) {
+  return [
+    tokens.method(req, res),
+    tokens.url(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms',
+    tokens.body(req, res)
+  ].join(' ')
+}))
 
-let notes = [
-	{
-		id: "1",
-		content: "HTML is easy",
-		important: true
-	},
-	{
-		id: "2",
-		content: "Browser can execute only JavaScript",
-		important: false
-	},
-	{
-		id: "3",
-		content: "GET and POST are the most important methods of HTTP protocol",
-		important: true
-	}
-]
 
 app.get('/', (request, response) => {
-	response.send('<h1>Hello World!</h1>')
+  response.send('<h1>Hello World!</h1>')
 })
 
-app.get('/api/notes', (request, response) => {
-	Note.find({}).then(notes => {
-		response.json(notes)
-	})
+app.get('/api/notes', (request, response, next) => {
+  Note.find({}).then(notes => {
+    response.json(notes)
+  }).catch(error => next(error))
 })
 
-app.get('/api/notes/:id', (request, response) => {
-	const id = request.params.id
-	const note = notes.find(note => note.id === id)
-
-	if (note) {
-		response.json(note)
-	} else {
-		response.status(404).end()
-	}
+app.get('/api/notes/:id', (request, response, next) => {
+  Note.findById(request.params.id).then(note => {
+    if (note) {
+      response.json(note)
+    } else {
+      response.status(404).end()
+    }
+  })
+    .catch(error => next(error))
 })
 
-app.delete('/api/notes/:id', (request, response) => {
-	const id = request.params.id
-	notes = notes.filter(note => note.id !== id)
-
-	response.status(204).end()
+app.delete('/api/notes/:id', (request, response, next) => {
+  Note.findByIdAndDelete(request.params.id)
+    .then(() => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
-const generateId = () => {
-	const maxId = notes.length > 0
-		? Math.max(...notes.map(n => Number(n.id)))
-		: 0
-	return String(maxId + 1)
-}
+app.post('/api/notes', (request, response, next) => {
+  const body = request.body
 
-app.post('/api/notes', (request, response) => {
-	const body = request.body
+  if (!body.content) {
+    return response.status(400).json({
+      error: 'content missing'
+    })
+  }
 
-	if (!body.content) {
-		return response.status(400).json({
-			error: 'content missing'
-		})
-	}
+  const note = new Note({
+    content: body.content,
+    important: body.important || false,
+  })
 
-	const note = {
-		content: body.content,
-		important: Boolean(body.important) || false,
-		id: generateId(),
-	}
-
-	notes = notes.concat(note)
-
-	response.json(note)
+  note.save().then(savedNote => {
+    response.json(savedNote)
+  }).catch(error => next(error))
 })
 
-app.put('/api/notes/:id', (request, response) => {
-	const id = request.params.id;
-	const body = request.body;
+//alternative method with async await
 
-	const note = notes.find(note => note.id === id);
+// app.get('/api/notes/:id', async (request, response, next) => {
+// 	try {
+// 		const note = await Note.findById(request.params.id)
+// 		if (note) {
+// 			response.json(note)
+// 		} else {
+// 			response.status(404).end()
+// 		}
+// 	} catch (error) {
+// 		next(error)
+// 	}
+// })
 
-	if (!note) {
-		return response.status(404).json({ error: 'note not found ' })
-	};
+app.put('/api/notes/:id', (request, response, next) => {
+  const { content, important } = request.body
 
-	const updatedNote = {
-		...note,
-		content: body.content !== undefined ? body.content : note.content,
-		important: body.important !== undefined ? body.important : note.important
-	}
-
-	notes = notes.map(note => note.id === id ? updatedNote : note)
-
-	response.json(updatedNote)
+  Note.findByIdAndUpdate(
+    request.params.id,
+    { content, important },  // Directly use the destructured values
+    { new: true, runValidators: true, context: 'query' }
+  )
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
-	response.status(404).send({ error: 'unknown endpoint' })
+  response.status(404).send({ error: 'unknown endpoint' })
 }
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.port || 3001;
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  } else if (error.name === 'MongoServerError' && error.code === 11000) {
+    // Duplicate key error
+    return response.status(400).json({ error: 'note content must be unique' })
+  }
+
+  next(error)
+}
+
+// this has to be the last loaded middleware, also all the routes should be registered before this!
+app.use(errorHandler)
+
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
