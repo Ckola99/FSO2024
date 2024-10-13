@@ -27,10 +27,10 @@ const Note = mongoose.model('Note', noteSchema)
 // })
 
 Note.find({}).then(result => {
-	result.forEach(note => {
-		console.log(note)
-	})
-	mongoose.connection.close()
+  result.forEach(note => {
+    console.log(note)
+  })
+  mongoose.connection.close()
 })
 
 // note.save().then(result => {
