@@ -13,8 +13,13 @@ const initialBlogs = [
 		url: 'www.randoms2.co.za',
 		likes: 150
 	}
-]
+];
+
+const blogsInDatabase = async () => {
+	const blogs = await Blog.find({});
+	return blogs.map(blog => blog.toJSON())
+}
 
 module.exports = {
-	initialBlogs
+	initialBlogs, blogsInDatabase
 }
