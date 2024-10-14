@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+require('dotenv').config();
 
 if (process.argv.length<3) {
   console.log('give password as argument')
@@ -8,7 +9,9 @@ if (process.argv.length<3) {
 const password = process.argv[2]
 
 const url =
-  `mongodb+srv://christopherkola:${password}@clusterfso.atfg2.mongodb.net/noteApp?retryWrites=true&w=majority&appName=ClusterFSO`
+  process.env.NODE_ENV === 'test'
+    ? process.env.TEST_MONGODB_URI
+    : process.env.MONGODB_URI;
 
 mongoose.set('strictQuery',false)
 
@@ -26,14 +29,31 @@ const Note = mongoose.model('Note', noteSchema)
 //   important: true,
 // })
 
-Note.find({}).then(result => {
-  result.forEach(note => {
-    console.log(note)
-  })
-  mongoose.connection.close()
-})
+// Note.find({}).then(result => {
+//   result.forEach(note => {
+//     console.log(note)
+//   })
+//   mongoose.connection.close()
+// })
 
 // note.save().then(result => {
 //   console.log('note saved!')
 //   mongoose.connection.close()
 // })
+
+const note1 = new Note({
+  content: 'HTML is easy',
+  important: true,
+});
+
+const note2 = new Note({
+  content: 'JavaScript is versatile',
+  important: true,
+});
+
+note1.save().then(() => {
+  note2.save().then(() => {
+    console.log('notes saved!');
+    mongoose.connection.close();
+  });
+});
