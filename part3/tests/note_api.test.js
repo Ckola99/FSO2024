@@ -9,11 +9,29 @@ const assert = require('node:assert')
 const api = supertest(app)
 
 beforeEach(async () => {
+  // await Note.deleteMany({})
+  // let noteObject = new Note(helper.initialNotes[0])
+  // await noteObject.save()
+  // noteObject = new Note(helper.initialNotes[1])
+  // await noteObject.save()
+
+  // await Note.deleteMany({})
+  // console.log('cleared')
+
+  // helper.initialNotes.forEach(async (note) => {
+  //   let noteObject = new Note(note)
+  //   await noteObject.save()
+  //   console.log('saved')
+  // })
+
+  // console.log('done')
+
   await Note.deleteMany({})
-  let noteObject = new Note(helper.initialNotes[0])
-  await noteObject.save()
-  noteObject = new Note(helper.initialNotes[1])
-  await noteObject.save()
+
+  const noteObjects = helper.initialNotes
+    .map(note => new Note(note))
+  const promiseArray = noteObjects.map(note => note.save())
+  await Promise.all(promiseArray)
 })
 
 test('notes are returned as json', async () => {
