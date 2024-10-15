@@ -87,6 +87,66 @@ test('a blog can be deleted', async () => {
 	assert.strictEqual(blogsAfterReq.length, blogsBeforeReq.length - 1)
 })
 
+test('updates a blog successfully', async () => {
+	const blogsBeforeUpdate = await helper.blogsInDatabase();
+	const blogToUpdate = blogsBeforeUpdate[0];
+
+	const updatedData = {
+		title: 'Updated Blog Title',
+		author: blogToUpdate.author,
+		url: blogToUpdate.url,
+		likes: blogToUpdate.likes + 10,
+	}
+
+	const response = await api
+		.put(`/api/blogs/${blogToUpdate.id}`)
+		.send(updatedData)
+		.expect(200)
+		.expect('Content-Type', /application\/json/)
+
+	const updatedBlog = response.body
+
+	assert.strictEqual(updatedBlog.title, 'Updated Blog Title')
+	assert.strictEqual(updatedBlog.likes, blogToUpdate.likes + 10)
+
+	const blogsAfterUpdate = await helper.blogsInDatabase();
+	assert.strictEqual(blogsAfterUpdate.length, blogsBeforeUpdate.length)
+})
+
+test('returns 404 if the blog does not exist', async () => {
+	const nonExistingId = await helper.nonExistingId();
+
+	const updatedData = {
+		title: 'Non-existent blog',
+		author: 'unknown Author',
+		url: 'http://unknown.com',
+		likes: 5
+	}
+
+	await api
+		.put(`/api/blogs/${nonExistingId}`)
+		.send(updatedData)
+		.expect(404)
+});
+
+test('returns 400 if invalid data is provided', async () => {
+	const blogsBeforeUpdate = await helper.blogsInDatabase()
+	const blogToUpdate = blogsBeforeUpdate[0]
+
+	const invalidData = {
+		author: 'Invalid Data Author',
+		likes: 10,
+	}
+
+	await api
+		.put(`/api/blogs/${blogToUpdate.id}`)
+		.send(invalidData)
+		.expect(400)
+
+	const blogsAfterUpdate = await helper.blogsInDatabase();
+	const unchangedBlog = blogsAfterUpdate.find(blog => blog.id === blogToUpdate.id)
+	assert.strictEqual(unchangedBlog.title, blogToUpdate.title)
+})
 
 after(async () => {
 	await mongoose.connection.close()

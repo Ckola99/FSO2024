@@ -42,13 +42,17 @@ blogsRouter.delete('/:id', async (request, response) => {
 })
 
 blogsRouter.put('/:id', async (request, response) => {
-	const body = request.body;
+	const { url, title } = request.body
+
+	if (!title || !url) {
+		return response.status(400).json({ error: 'Title and URL required' })
+	}
 
 	const blog = {
-		title: body.title,
-		author: body.author,
-		url: body.url,
-		likes: body.likes,
+		title,
+		author: request.body.author,
+		url,
+		likes: request.body.likes,
 	}
 
 	const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true }) //With { new: true }: Mongoose returns the updated document, reflecting the changes you just made.
