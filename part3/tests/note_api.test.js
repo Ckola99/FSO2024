@@ -140,7 +140,7 @@ describe('when there is initially some notes saved', () => {
       const notesAtEnd = await helper.notesInDb()
 
       const contents = notesAtEnd.map(r => r.content)
-      assert(!contents.includes(noteToDelete.content)) //returns false if not found then ! turns it false resulting in the assertion being correct
+      assert(!contents.includes(noteToDelete.content)) //returns false if not found then ! turns it true resulting in the assertion being correct
 
       assert.strictEqual(notesAtEnd.length, helper.initialNotes.length - 1) //creates a robust check
     })
