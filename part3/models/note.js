@@ -14,6 +14,10 @@ const noteSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 // Set the toJSON method to transform Mongoose document objects:

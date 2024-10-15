@@ -92,7 +92,7 @@ notesRouter.put('/:id', async (request, response ) => {
   if(updatedNote){
     response.json(updatedNote)
   } else {
-    response.status(404).json({ error: 'Note not found'})
+    response.status(404).json({ error: 'Note not found' })
   }
 
 })
