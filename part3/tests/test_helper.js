@@ -24,6 +24,13 @@ const notesInDb = async () => {
   return notes.map(note => note.toJSON())
 }
 
+const insertMany = async () => {
+  const noteObjects = helper.initialNotes
+    .map(note => new Note(note))
+  const promiseArray = noteObjects.map(note => note.save())
+  await Promise.all(promiseArray)
+}
+
 module.exports = {
-  initialNotes, nonExistingId, notesInDb
+  initialNotes, nonExistingId, notesInDb, insertMany
 }

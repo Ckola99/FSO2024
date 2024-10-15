@@ -55,7 +55,7 @@ test('POST /api/blogs creates a new blog post', async () => {
 	assert(blogTitles.includes('designers in SA'))
 });
 
-test.only('blog without title or url ', async () => {
+test('blog without title or url ', async () => {
 	const newBlog = {
 		title: 'designers in SA',
 		author: 'Peter Abloh',
