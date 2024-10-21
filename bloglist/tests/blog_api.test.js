@@ -1,10 +1,12 @@
-const { test, after, beforeEach } = require('node:test')
+const { test, after, beforeEach, describe } = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const assert = require('node:assert')
 const app = require('../app')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const helper = require('./test_helper')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
@@ -146,6 +148,108 @@ test('returns 400 if invalid data is provided', async () => {
 	const blogsAfterUpdate = await helper.blogsInDatabase();
 	const unchangedBlog = blogsAfterUpdate.find(blog => blog.id === blogToUpdate.id)
 	assert.strictEqual(unchangedBlog.title, blogToUpdate.title)
+})
+
+describe('when there is initially one user in database', () => {
+	beforeEach(async () => {
+		await Blog.deleteMany({})
+		await User.deleteMany({})
+
+		const passwordHash = await bcrypt.hash('sekret', 10)
+		const user = new User({ username: 'root', passwordHash })
+
+		await user.save()
+
+		const blogObjects = helper.initialBlogs.map(blog => new Blog(blog))
+		const promiseArray = blogObjects.map(blog => blog.save())
+		await Promise.all(promiseArray)
+	});
+
+	test('creation succeeds with a fresh username', async () => {
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			username: 'jtest',
+			name: ' Johnny Test',
+			password: 'tester95'
+		}
+
+		await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(201)
+			.expect('Content-Type', /application\/json/)
+
+		const usersAtEnd = await helper.usersInDb()
+		assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+
+		const usernames = usersAtEnd.map(u => u.username)
+		assert(usernames.includes(newUser.username))
+	})
+
+	test('creation falls with proper status code and message if username already taken', async () => {
+		const usersAtStart = await helper.usersInDb()
+
+		const newUser = {
+			username: 'root',
+			name: 'Superuser',
+			password: 'slainen'
+		}
+
+		const result = await api
+			.post('/api/users')
+			.send(newUser)
+			.expect(400)
+			.expect('Content-Type', /application\/json/)
+
+		const usersAtEnd = await helper.usersInDb()
+		assert(result.body.error.includes('expected `username` to be unique'))
+
+		assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+	})
+
+	test('POST /api/blogs creates a new blog post with a valid token', async () => {
+		const token = await helper.loginAndGetToken();
+
+		const newBlog = {
+			title: 'designers in SA',
+			author: 'Peter Abloh',
+			url: 'www.randoms3.co.za',
+			likes: 89
+		};
+
+		await api
+			.post('/api/blogs')
+			.set('Authorization', `Bearer ${token}`) // Send token in the request header
+			.send(newBlog)
+			.expect(201)
+			.expect('Content-Type', /application\/json/);
+
+		const blogsAfterPost = await helper.blogsInDatabase();
+		assert.strictEqual(blogsAfterPost.length, helper.initialBlogs.length + 1);
+
+		const blogTitles = blogsAfterPost.map(b => b.title);
+		assert(blogTitles.includes('designers in SA'));
+	});
+
+	test('POST /api/blogs fails with 401 Unauthorized if token is not provided', async () => {
+		const newBlog = {
+			title: 'Unauthorized Blog',
+			author: 'John Doe',
+			url: 'www.unauthorized.com',
+			likes: 10
+		};
+
+		await api
+			.post('/api/blogs')
+			.send(newBlog) // No token sent in the request
+			.expect(401); // Expect 401 Unauthorized
+
+		const blogsAfterPost = await helper.blogsInDatabase();
+		assert.strictEqual(blogsAfterPost.length, helper.initialBlogs.length);
+	});
+
+
 })
 
 after(async () => {
