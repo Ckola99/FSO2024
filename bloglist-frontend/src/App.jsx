@@ -12,9 +12,6 @@ const App = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [user, setUser] = useState(null);
-	const [newTitle, setNewTitle] = useState("");
-	const [newAuthor, setNewAuthor] = useState("");
-	const [newUrl, setNewUrl] = useState("");
 	const [message, setMessage] = useState(null);
 	const [loginVisible, setLoginVisible] = useState(false);
 	const [ascending, setAscending] = useState(false);
@@ -74,31 +71,13 @@ const App = () => {
 		}, 5000);
 	};
 
-	const addBlog = async (event) => {
-		event.preventDefault();
+	const addBlog = async (newBlog) => {
 		blogFormRef.current.toggleVisibility()
 		try {
-			if (!newTitle || !newAuthor || !newUrl) {
-				setMessage({
-					text: "missing credentials",
-					type: "error",
-				});
-				setTimeout(() => {
-					setMessage(null);
-				}, 5000);
-			}
 
-			const newBlog = {
-				title: newTitle,
-				author: newAuthor,
-				url: newUrl,
-			};
 
 			const savedBlog = await blogService.create(newBlog);
 			setBlogs(blogs.concat(savedBlog)); // Update state to display the new blog
-			setNewTitle("");
-			setNewAuthor("");
-			setNewUrl("");
 			setMessage({
 				text: `A new blog ${savedBlog.title} by ${newBlog.author} added`,
 				type: "info",

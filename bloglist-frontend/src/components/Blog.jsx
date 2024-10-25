@@ -31,13 +31,30 @@ const Blog = ({ blog, updateBlog,  removeBlog, user }) => {
 
 	return (
 		<div style={blogStyle}>
-			{blog.title} {blog.author} <button onClick={toggleVisibility}>{visible ? "hide" : "view"}</button>
-      {visible && (<div>
-        <p>{blog.url}</p>
-        <p>likes {blog.likes} <button onClick={handleLike}>like</button></p>
-        <p>{blog.user.username}</p>
-        { user.username === blog.user.username && (<button onClick={handleDelete}>delete</button>)}
-      </div>)}
+			<p>
+				{blog.title} {blog.author}{" "}
+				<button onClick={toggleVisibility}>
+					{visible ? "hide" : "view"}
+				</button>
+			</p>
+			{visible && (
+				<div>
+					<p>{blog.url}</p>
+					<p>
+						likes {blog.likes}{" "}
+						<button onClick={handleLike}>
+							like
+						</button>
+					</p>
+					<p>{blog.user.username}</p>
+					{user.username ===
+						blog.user.username && (
+						<button onClick={handleDelete}>
+							delete
+						</button>
+					)}
+				</div>
+			)}
 		</div>
 	);
 };
